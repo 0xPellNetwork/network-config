@@ -26,18 +26,20 @@
 #    - Reminds about Cosmovisor requirement
 
 # Configuration parameters
-DAEMON_HOME=$HOME/.pellcored/cosmovisor
+DAEMON_HOME=${DAEMON_HOME:=/root/.pellcored}
+COSMOVISOR_HOME=$DAEMON_HOME/cosmovisor
 CHAIN_ID="ignite_186-1"
-KEY_NAME="validator"  # validator key name
+KEY_NAME=${KEY_NAME:-validator} # validator key name
+KEYRING_BACKEND=${KEYRING_BACKEND:-file}
 
-PROPOSAL_ID="1"  # upgrade proposal ID
-UPGRADE_NAME="v1.0.20" # upgrade name matching the governance proposal
-BINARY_URL="https://github.com/0xPellNetwork/network-config/releases/download/v1.0.20-ignite/pellcored-v1.0.20-linux-amd64"  # binary download URL
+PROPOSAL_ID=${PROPOSAL_ID:-3}  # upgrade proposal ID
+UPGRADE_NAME=${UPGRADE_NAME:-v1.0.20} # upgrade name matching the governance proposal
+BINARY_URL=${BINARY_URL:-https://github.com/0xPellNetwork/network-config/releases/download/${UPGRADE_NAME}-ignite/pellcored-${UPGRADE_NAME}-linux-amd64}  # binary download URL
 
 
 # Check if node is a validator
 check_validator() {
-    local validator_address=$(pellcored keys show $KEY_NAME --bech val -a)
+    local validator_address=$(pellcored keys show $KEY_NAME --keyring-backend=$KEYRING_BACKEND --bech val -a)
     local validator_status=$(pellcored query staking validator $validator_address --output json 2>/dev/null)
 
     if [ $? -eq 0 ]; then
@@ -49,20 +51,17 @@ check_validator() {
     fi
 }
 
-# Create upgrade directory structure
-create_upgrade_dir() {
-    echo "Creating upgrade directory structure..."
-    mkdir -p $DAEMON_HOME/upgrades/$UPGRADE_NAME/bin
-}
-
 # Download and verify new binary
 download_binary() {
+    echo "Creating upgrade directory structure..."
+    mkdir -p $COSMOVISOR_HOME/upgrades/$UPGRADE_NAME/bin
+
     echo "Downloading new binary..."
-    wget $BINARY_URL -O $DAEMON_HOME/upgrades/$UPGRADE_NAME/bin/pellcored
-    chmod +x $DAEMON_HOME/upgrades/$UPGRADE_NAME/bin/pellcored
+    wget $BINARY_URL -O $COSMOVISOR_HOME/upgrades/$UPGRADE_NAME/bin/pellcored
+    chmod +x $COSMOVISOR_HOME/upgrades/$UPGRADE_NAME/bin/pellcored
     
     # Verify binary
-    if ! $DAEMON_HOME/upgrades/$UPGRADE_NAME/bin/pellcored version; then
+    if ! $COSMOVISOR_HOME/upgrades/$UPGRADE_NAME/bin/pellcored version; then
         echo "Binary verification failed!"
         exit 1
     fi
@@ -76,7 +75,7 @@ vote_proposal() {
         --chain-id $CHAIN_ID \
         --fees=0.6pell \
         --gas=60000000 \
-        --keyring-backend=test \
+        --keyring-backend=$KEYRING_BACKEND \
         -y
 }
 
