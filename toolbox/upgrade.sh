@@ -30,7 +30,7 @@ DAEMON_HOME=${DAEMON_HOME:=/root/.pellcored}
 COSMOVISOR_HOME=$DAEMON_HOME/cosmovisor
 CHAIN_ID="ignite_186-1"
 KEY_NAME=${KEY_NAME:-validator} # validator key name
-KEYRING_BACKEND=${KEYRING_BACKEND:-file}
+KEYRING_BACKEND=${KEYRING_BACKEND:-os}
 
 PROPOSAL_ID=${PROPOSAL_ID:-3}  # upgrade proposal ID
 UPGRADE_NAME=${UPGRADE_NAME:-v1.0.20} # upgrade name matching the governance proposal
