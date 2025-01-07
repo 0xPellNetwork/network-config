@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   check-branch:
-    runs-on: [ "self-hosted", "Linux", "X64", "explorer", "gcp" ]
+    runs-on: ubuntu-latest
     outputs:
       tag_version: ${{ steps.get-tag.outputs.TAG_VERSION }}
     steps:
@@ -30,7 +30,7 @@ jobs:
       attestations: write
     if: inputs.skip_release != true 
     needs: [check-branch]
-    runs-on: [ "self-hosted", "Linux", "X64", "explorer", "gcp" ]
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: release
     steps:
@@ -93,7 +93,7 @@ jobs:
 
   release-success:
     needs: publish-release
-    runs-on: [ "self-hosted", "Linux", "X64", "explorer", "gcp" ]
+    runs-on: ubuntu-latest
     steps:
       - name: Notify Lark upon release
         uses: drayeasy/action-lark-notify@main
