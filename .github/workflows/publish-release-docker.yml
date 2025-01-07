@@ -1,0 +1,104 @@
+name: Publish Release From Docker
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+jobs:
+  check-branch:
+    runs-on: ubuntu-latest
+    outputs:
+      tag_version: ${{ steps.get-tag.outputs.TAG_VERSION }}
+    steps:
+      - name: Get Tag Version
+        id: get-tag
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/}"
+          echo "TAG_VERSION=$TAG_VERSION" >> $GITHUB_ENV
+          echo "Tag version is: $TAG_VERSION"
+          echo "TAG_VERSION=$TAG_VERSION" >> $GITHUB_OUTPUT
+
+  publish-release:
+    permissions:
+      id-token: write
+      contents: write
+      attestations: write
+    if: inputs.skip_release != true 
+    needs: [check-branch]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          tags: true
+
+      - name: Set Version from Tag
+        run: |
+          echo "GITHUB_TAG_VERSION=${{ needs.check-branch.outputs.tag_version }}" >> "${GITHUB_ENV}"
+          echo "GORELEASER_CURRENT_TAG=${{ needs.check-branch.outputs.tag_version }}" >> "${GITHUB_ENV}"
+          echo "Using tag version: ${{ needs.check-branch.outputs.tag_version }}"
+
+      - name: Print Version Info
+        run: |
+          echo "GORELEASER_CURRENT_TAG=${GORELEASER_CURRENT_TAG}"
+          if [ -z "${GORELEASER_CURRENT_TAG}" ]; then
+            echo "ERROR: GORELEASER_CURRENT_TAG is empty!"
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: true 
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ env.GORELEASER_CURRENT_TAG }}
+
+      - name: Login to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+
+      - name: Publish Release Files
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          echo "Pulling image: docker.io/pellnetwork/pellnode:${GORELEASER_CURRENT_TAG}"
+          docker pull docker.io/pellnetwork/pellnode:${GORELEASER_CURRENT_TAG}
+
+          CONTAINER_ID=$(docker create docker.io/pellnetwork/pellnode:${GORELEASER_CURRENT_TAG})
+          docker cp $CONTAINER_ID:/usr/local/bin/pellcored ./pellcored
+          docker rm $CONTAINER_ID
+
+          sha256sum pellcored > checksums.txt
+
+          mkdir -p release
+          mv pellcored release/
+          mv checksums.txt release/
+
+          gh release upload "${GORELEASER_CURRENT_TAG}" release/*
+
+      - name: Clean Up Workspace
+        if: always()
+        shell: bash
+        run: sudo rm -rf * || echo "failed to cleanup workspace please investigate"
+
+  release-success:
+    needs: publish-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Lark upon release
+        uses: drayeasy/action-lark-notify@main
+        env:
+          LARK_WEBHOOK: ${{ secrets.LARK_WEBHOOK_URL_FOR_RELEASE }}
+          LARK_MESSAGE_TITLE: "🚀 Pell Network PreRelease ${{ github.ref_name }}"
+          LARK_MESSAGE_URL: "${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+          LARK_MESSAGE_TEMPLATE: "yellow"
