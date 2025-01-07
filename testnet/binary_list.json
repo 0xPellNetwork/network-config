@@ -7,6 +7,14 @@
     {
       "download_url": "https://github.com/0xPellNetwork/network-config/releases/download/v1.0.20-ignite/pellcored-v1.0.20-linux-amd64",
       "binary_location": "cosmovisor/upgrades/v1.0.20/bin/pellcored"
+    },
+    {
+      "download_url": "https://github.com/0xPellNetwork/network-config/releases/download/v1.1.1-ignite/pellcored-v1.1.1-linux-amd64",
+      "binary_location": "cosmovisor/upgrades/v1.1.1/bin/pellcored"
+    },
+    {
+      "download_url": "https://github.com/0xPellNetwork/network-config/releases/download/v1.1.5/pellcored-v1.1.5-linux-amd64",
+      "binary_location": "cosmovisor/upgrades/v1.1.5/bin/pellcored"
     }
   ]
 }
