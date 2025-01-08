@@ -57,7 +57,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           prerelease: true 
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_TOKEN }}
           tag_name: ${{ env.GORELEASER_CURRENT_TAG }}
 
       - name: Login to Docker Hub
@@ -107,7 +107,7 @@ jobs:
 
       - name: Commit and Push Changes
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
