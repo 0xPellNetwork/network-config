@@ -112,11 +112,22 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
+          BRANCH_NAME=$(git branch -r --contains tags/${GITHUB_REF_NAME} | grep -v HEAD | awk -F'/' '{print $2}' | head -n 1)
+          
+          if [ -z "$BRANCH_NAME" ]; then
+            echo "Error: Could not determine branch for tag ${GITHUB_REF_NAME}."
+            exit 1
+          fi
+
+          echo "Determined branch: $BRANCH_NAME"
+
+          git checkout $BRANCH_NAME
+
           git add testnet/binary_list.json
           git commit -m "Update binary_list.json with version ${GORELEASER_CURRENT_TAG}"
 
           gh auth setup-git
-          git push origin HEAD:${{ github.ref_name }}
+          git push origin HEAD:$BRANCH_NAME
 
       - name: Clean Up Workspace
         if: always()
