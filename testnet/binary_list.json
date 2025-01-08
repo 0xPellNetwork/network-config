@@ -15,6 +15,10 @@
     {
       "download_url": "https://github.com/0xPellNetwork/network-config/releases/download/v1.1.5-patch1/pellcored-v1.1.5-path1-linux-amd64",
       "binary_location": "cosmovisor/upgrades/v1.1.5/bin/pellcored"
+    },
+    {
+      "download_url": "https://github.com/0xPellNetwork/network-config/releases/download/v0.0.8/pellcored-v0.0.8-linux-amd64",
+      "binary_location": "cosmovisor/upgrades/v0.0.8/bin/pellcored"
     }
   ]
 }
