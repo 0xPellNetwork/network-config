@@ -17,12 +17,8 @@
       "binary_location": "cosmovisor/upgrades/v1.1.5/bin/pellcored"
     },
     {
-      "download_url": "https://github.com/0xPellNetwork/network-config/releases/download/v1.2.0/pellcored-v1.2-linux-amd64",
-      "binary_location": "cosmovisor/upgrades/v1.2/bin/pellcored"
-    },
-    {
       "download_url": "https://github.com/0xPellNetwork/network-config/releases/download/v1.2.1/pellcored-v1.2.1-linux-amd64",
-      "binary_location": "cosmovisor/upgrades/v1.2.1/bin/pellcored"
+      "binary_location": "cosmovisor/upgrades/v1.2/bin/pellcored"
     }
   ]
 }
