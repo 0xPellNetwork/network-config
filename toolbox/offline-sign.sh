@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Default configuration
 DEFAULT_WALLET="admin"
 DEFAULT_KEYRING="test"
-DEFAULT_CHAIN_ID="pell-testnet"
+DEFAULT_CHAIN_ID="pell_ignite-1"
 
 # Show help information
 show_help() {
@@ -65,12 +65,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo -e "${BLUE}=== Pell Network Message Signing ===${NC}"
-echo -e "${YELLOW}Message: ${MESSAGE}${NC}"
-echo -e "${YELLOW}Wallet: ${WALLET_NAME}${NC}"
-echo -e "${YELLOW}Chain ID: ${CHAIN_ID}${NC}"
-echo
-
 # Check pellcored command
 if ! command -v pellcored &> /dev/null; then
     echo -e "${RED}❌ Error: pellcored command not found${NC}"
@@ -79,7 +73,6 @@ if ! command -v pellcored &> /dev/null; then
 fi
 
 # Check if wallet exists
-echo -e "${BLUE}🔍 Checking wallet...${NC}"
 if ! pellcored keys show "$WALLET_NAME" --keyring-backend="$KEYRING_BACKEND" &> /dev/null; then
     echo -e "${RED}❌ Error: Wallet '$WALLET_NAME' does not exist${NC}"
     echo "Available wallets:"
@@ -94,10 +87,7 @@ if [ -z "$WALLET_ADDRESS" ]; then
     exit 1
 fi
 
-echo -e "${GREEN}✅ Wallet exists: ${WALLET_ADDRESS}${NC}"
-
 # Create unsigned transaction
-echo -e "${BLUE}📝 Creating unsigned transaction...${NC}"
 if ! pellcored tx bank send "$WALLET_ADDRESS" "$WALLET_ADDRESS" 1upell \
     --chain-id="$CHAIN_ID" \
     --keyring-backend="$KEYRING_BACKEND" \
@@ -108,10 +98,7 @@ if ! pellcored tx bank send "$WALLET_ADDRESS" "$WALLET_ADDRESS" 1upell \
     exit 1
 fi
 
-echo -e "${GREEN}✅ Unsigned transaction created${NC}"
-
 # Sign transaction
-echo -e "${BLUE}🔐 Signing transaction...${NC}"
 if ! pellcored tx sign "$UNSIGNED_TX" \
     --from="$WALLET_NAME" \
     --keyring-backend="$KEYRING_BACKEND" \
@@ -120,8 +107,6 @@ if ! pellcored tx sign "$UNSIGNED_TX" \
     echo -e "${RED}❌ Error: Failed to sign transaction${NC}"
     exit 1
 fi
-
-echo -e "${GREEN}✅ Transaction signed successfully${NC}"
 
 # Extract signature information
 SIGNATURE=$(jq -r '.signatures[0]' "$SIGNED_TX" 2>/dev/null)
@@ -159,26 +144,14 @@ SIGNATURE_RESULT=$(jq -n \
     signed_tx: $signed_tx
   }')
 
+# Encode signature result to base64
+SIGNATURE_BASE64=$(echo "$SIGNATURE_RESULT" | base64)
+
 # Output results
-echo
-echo -e "${GREEN}🎉 Signature generated successfully!${NC}"
-echo -e "${YELLOW}📋 Signature information:${NC}"
-echo -e "  Message: ${MESSAGE}"
-echo -e "  Signer: ${WALLET_ADDRESS}"
-echo -e "  Signature: ${SIGNATURE:0:50}..."
-echo -e "  Public key type: ${PUBKEY_TYPE}"
-echo
-
 if [ -n "$OUTPUT_FILE" ]; then
-    # Save to file
-    echo "$SIGNATURE_RESULT" > "$OUTPUT_FILE"
-    echo -e "${GREEN}✅ Signature saved to: ${OUTPUT_FILE}${NC}"
+    # Save base64 encoded result to file
+    echo "$SIGNATURE_BASE64" > "$OUTPUT_FILE"
 else
-    # Output to console
-    echo -e "${BLUE}📄 Complete signature result:${NC}"
-    echo "$SIGNATURE_RESULT" | jq '.'
-fi
-
-echo
-echo -e "${GREEN}✅ Signing completed!${NC}"
-echo -e "${YELLOW}💡 Use ./pell_verify.sh to verify this signature${NC}" 
+    # Output base64 encoded result to console
+    echo "$SIGNATURE_BASE64"
+fi 
