@@ -93,6 +93,7 @@ if ! pellcored tx bank send "$WALLET_ADDRESS" "$WALLET_ADDRESS" 1upell \
     --keyring-backend="$KEYRING_BACKEND" \
     --generate-only \
     --note="$MESSAGE" \
+    --node="tcp://35.186.145.237:26657" \
     > "$UNSIGNED_TX" 2>/dev/null; then
     echo -e "${RED}❌ Error: Failed to create unsigned transaction${NC}"
     exit 1
@@ -103,6 +104,7 @@ if ! pellcored tx sign "$UNSIGNED_TX" \
     --from="$WALLET_NAME" \
     --keyring-backend="$KEYRING_BACKEND" \
     --chain-id="$CHAIN_ID" \
+    --node="tcp://35.186.145.237:26657" \
     > "$SIGNED_TX" 2>/dev/null; then
     echo -e "${RED}❌ Error: Failed to sign transaction${NC}"
     exit 1
@@ -154,4 +156,4 @@ if [ -n "$OUTPUT_FILE" ]; then
 else
     # Output base64 encoded result to console
     echo "$SIGNATURE_BASE64"
-fi 
+fi
