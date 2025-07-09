@@ -73,15 +73,15 @@ if ! command -v pellcored &> /dev/null; then
 fi
 
 # Check if wallet exists
-if ! pellcored keys show "$WALLET_NAME" --keyring-backend="$KEYRING_BACKEND" &> /dev/null; then
+if ! pellcored keys show "$WALLET_NAME" --keyring-backend="$KEYRING_BACKEND" > /dev/null; then
     echo -e "${RED}❌ Error: Wallet '$WALLET_NAME' does not exist${NC}"
     echo "Available wallets:"
-    pellcored keys list --keyring-backend="$KEYRING_BACKEND" 2>/dev/null || echo "  (No available wallets)"
+    pellcored keys list --keyring-backend="$KEYRING_BACKEND" || echo "  (No available wallets)"
     exit 1
 fi
 
 # Get wallet address
-WALLET_ADDRESS=$(pellcored keys show "$WALLET_NAME" --keyring-backend="$KEYRING_BACKEND" --address 2>/dev/null)
+WALLET_ADDRESS=$(pellcored keys show "$WALLET_NAME" --keyring-backend="$KEYRING_BACKEND" --address)
 if [ -z "$WALLET_ADDRESS" ]; then
     echo -e "${RED}❌ Error: Unable to get wallet address${NC}"
     exit 1
@@ -94,7 +94,7 @@ if ! pellcored tx bank send "$WALLET_ADDRESS" "$WALLET_ADDRESS" 1upell \
     --generate-only \
     --note="$MESSAGE" \
     --node="tcp://35.186.145.237:26657" \
-    > "$UNSIGNED_TX" 2>/dev/null; then
+    > "$UNSIGNED_TX"; then
     echo -e "${RED}❌ Error: Failed to create unsigned transaction${NC}"
     exit 1
 fi
@@ -105,22 +105,22 @@ if ! pellcored tx sign "$UNSIGNED_TX" \
     --keyring-backend="$KEYRING_BACKEND" \
     --chain-id="$CHAIN_ID" \
     --node="tcp://35.186.145.237:26657" \
-    > "$SIGNED_TX" 2>/dev/null; then
+    > "$SIGNED_TX"; then
     echo -e "${RED}❌ Error: Failed to sign transaction${NC}"
     exit 1
 fi
 
 # Extract signature information
-SIGNATURE=$(jq -r '.signatures[0]' "$SIGNED_TX" 2>/dev/null)
+SIGNATURE=$(jq -r '.signatures[0]' "$SIGNED_TX")
 if [ -z "$SIGNATURE" ] || [ "$SIGNATURE" = "null" ]; then
     echo -e "${RED}❌ Error: Unable to extract signature${NC}"
     exit 1
 fi
 
 # Get public key information
-PUBKEY_INFO=$(jq -r '.auth_info.signer_infos[0].public_key' "$SIGNED_TX" 2>/dev/null)
-PUBKEY_TYPE=$(echo "$PUBKEY_INFO" | jq -r '.["@type"]' 2>/dev/null)
-PUBKEY_VALUE=$(echo "$PUBKEY_INFO" | jq -r '.key' 2>/dev/null)
+PUBKEY_INFO=$(jq -r '.auth_info.signer_infos[0].public_key' "$SIGNED_TX")
+PUBKEY_TYPE=$(echo "$PUBKEY_INFO" | jq -r '.["@type"]')
+PUBKEY_VALUE=$(echo "$PUBKEY_INFO" | jq -r '.key')
 
 # Create signature result - use jq to ensure proper JSON format
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
